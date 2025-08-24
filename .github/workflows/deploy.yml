@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      # SSH接続の準備
+      - name: Setup SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+          if_key_exists: replace
+
+      # rsyncでファイルをデプロイ
+      - name: Deploy with rsync
+        run: |
+          rsync -avz -e "ssh -p ${{ secrets.SSH_PORT }}" \
+              index.html \
+              img \
+              "${{ secrets.USER }}@${{ secrets.HOST }}:${{ secrets.DEPLOY_PATH }}"
